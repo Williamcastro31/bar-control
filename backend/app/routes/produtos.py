@@ -14,11 +14,13 @@ from app.services.produto_service import produto_to_display
 
 router = APIRouter(prefix="/produtos", tags=["produtos"])
 
+@router.get("", response_model=list[ProdutoOut])
 @router.get("/", response_model=list[ProdutoOut])
 def listar_produtos(db: Session = Depends(get_db), user=Depends(require_caixa)):
     produtos = db.execute(select(Produto).where(Produto.ativo == True)).scalars().all()
     return [produto_to_display(db, p) for p in produtos]
 
+@router.post("", response_model=ProdutoOut)
 @router.post("/", response_model=ProdutoOut)
 def criar_produto(payload: ProdutoCreate, request: Request, db: Session = Depends(get_db), admin=Depends(require_admin)):
     tipo = payload.tipo if payload.tipo in ("SIMPLES","COMBO") else "SIMPLES"
@@ -152,3 +154,4 @@ def listar_movimentos(db: Session = Depends(get_db), admin=Depends(require_admin
         )
         for mov, prod in rows
     ]
+
