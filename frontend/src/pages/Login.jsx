@@ -5,8 +5,8 @@ import { useNavigate } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
 
 export default function Login() {
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("admin123");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const { login } = useAuth();
   const nav = useNavigate();
@@ -48,9 +48,6 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="text-xs text-slate-500 mt-4">
-            Dica: admin/admin123 (ajuste no backend .env)
-          </div>
         </div>
       </div>
     </div>
