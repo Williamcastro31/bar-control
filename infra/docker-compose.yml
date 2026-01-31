@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16
+    container_name: bar_db
+    environment:
+      POSTGRES_DB: bar_control
+      POSTGRES_USER: bar_user
+      POSTGRES_PASSWORD: bar_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

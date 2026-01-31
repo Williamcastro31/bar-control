@@ -1,0 +1,62 @@
+services:
+  traefik:
+    image: traefik:v2.11
+    container_name: bar_traefik
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/acme.json:/letsencrypt/acme.json
+    env_file:
+      - ./.env
+    restart: always
+
+  db:
+    image: postgres:16
+    container_name: bar_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+
+  backend:
+    build: ../backend
+    container_name: bar_api
+    env_file:
+      - ../backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      CORS_ORIGINS: https://${DOMAIN}
+    depends_on:
+      - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bar_api.rule=Host(`api.${DOMAIN}`)"
+      - "traefik.http.routers.bar_api.entrypoints=websecure"
+      - "traefik.http.routers.bar_api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.bar_api.loadbalancer.server.port=8000"
+    restart: always
+
+  frontend:
+    build:
+      context: ../frontend
+      args:
+        VITE_API_URL: https://api.${DOMAIN}
+    container_name: bar_frontend
+    depends_on:
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bar_frontend.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.bar_frontend.entrypoints=websecure"
+      - "traefik.http.routers.bar_frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.bar_frontend.loadbalancer.server.port=80"
+    restart: always
+
+volumes:
+  pgdata:
